@@ -4,18 +4,18 @@
             :items="catalog"
             item-key="name"
             class="elevation-1">
-            <template v-slot:[`item.curators`]="{ item }">
-                <v-icon
-                    small
-                    class="mr-4"
-                    @click.stop="onEdit(item)">
-                    mdi-pencil
-                </v-icon>
-                <template>
-                    <v-dialog v-model="dialog" max-width="750">
-                       <catalog-item/>
-                    </v-dialog>
-            </template>
+                <template v-slot:[`item.curators`]="{ item }">
+                    <v-icon
+                        small
+                        class="mr-4"
+                        @click.stop="onEdit(item)">
+                        mdi-pencil
+                    </v-icon>
+                    <template>
+                        <v-dialog v-model="dialog" max-width="750">
+                           <catalog-item :value="editedItem" @close="dialog = false"/>
+                        </v-dialog>
+                </template>
             </template>
         </v-data-table>
 </template>
@@ -28,10 +28,18 @@ export default {
 
     data: () => ({
         dialog: false,
+        editedItem:{
+            arm:null,
+            boss:null,
+            curators:null
+        }
     }),
 
     methods: {
-        onEdit() {
+        onEdit(item) {
+            this.editedIndex = this.catalog.findIndex(e => e === item);
+            this.editedItem = Object.assign({}, this.catalog[this.editedIndex]);
+            console.log(item)
             this.dialog = true
         }
     },
