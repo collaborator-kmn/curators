@@ -19,11 +19,7 @@ import CatalogItem from '@/components/CatalogItem'
 </script>
 
 <style scoped>
-li{
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
+
 </style>
 
 
