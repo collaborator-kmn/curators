@@ -4,29 +4,37 @@
             :items="catalog"
             item-key="name"
             class="elevation-1">
-            <template v-slot:[`item.curators`]="{ catalog }">
-                <v-btn
-                    class="ma-2"
-                    color="primary"
-                    dark
-                >
-                    Изменить
+            <template v-slot:[`item.curators`]="{ item }">
                 <v-icon
                     small
-                    class="mr-2"
-                    @click.stop="$emit('edit', catalog)">
+                    class="mr-4"
+                    @click.stop="onEdit(item)">
                     mdi-pencil
                 </v-icon>
-                </v-btn>
+                <template>
+                    <v-dialog v-model="dialog" max-width="750">
+                       <catalog-item/>
+                    </v-dialog>
+            </template>
             </template>
         </v-data-table>
 </template>
 
 <script>
+import CatalogItem from "@/components/CatalogItem";
 export default {
+    components: {CatalogItem},
     props: ['catalog'],
 
-    data: () => ({}),
+    data: () => ({
+        dialog: false,
+    }),
+
+    methods: {
+        onEdit() {
+            this.dialog = true
+        }
+    },
 
     computed: {
         headers() {
