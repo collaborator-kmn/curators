@@ -1,98 +1,104 @@
 <template>
-    <v-app>
-        <v-main class="background">
-            <v-container>
-                <v-overlay :value="loading">
-                    <v-row>
-                        Получение данных
-                    </v-row>
-                    <v-row>
-                        <v-progress-circular
-                                indeterminate
-                                size="128"
-                        ></v-progress-circular>
-                    </v-row>
-                </v-overlay>
-                <v-card>
-                    <v-toolbar dark color="primary" flat>
-                        <v-toolbar-title>Каталог кураторов клиентов</v-toolbar-title>
-                        <v-spacer />
-                        <v-btn outlined @click="saveOnServer">сохранить</v-btn>
-                    </v-toolbar>
-                </v-card>
-                <v-card outlined class="mt-3">
-                    <catalog-table :catalog="catalogs" @edit="onEdit" />
-                </v-card>
-                <v-dialog v-model="dialog" max-width="750">
-                    <catalog-edit :value="editedItem" @save="onSave" @close="close" />
-                </v-dialog>
-            </v-container>
-        </v-main>
-    </v-app>
+    <v-card>
+        <v-toolbar flat color="primary" dark>
+            <v-toolbar-title>Редактирование записи</v-toolbar-title>
+            <v-spacer/>
+            <v-btn text icon @click.stop="close">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </v-toolbar>
+        <v-form ref="form" v-model="valid" lazy-validation>
+            <v-card-text>
+                <v-row dense>
+                    <v-col grow>
+                        <v-text-field placeholder="Куратор" dense hide-details outlined v-model="curator" required :rules="[v => !!v ||'Обязательное поле']"></v-text-field>
+                    </v-col>
+                    <v-col cols="2">
+                        <v-btn @click="onClick">добавить</v-btn>
+                    </v-col>
+                    <v-col cols="12"/>
+                </v-row>
+                <v-divider />
+                <v-data-table
+                        :headers="headers"
+                        :items="items"
+                        disable-pagination
+                        hide-default-footer
+                >
+                    <template v-slot:[`item.actions`]="{ item }">
+                        <v-icon
+                                small
+                                @click.stop="remove(item)"
+                        >
+                            mdi-delete
+                        </v-icon>
+                    </template>
+                </v-data-table>
+            </v-card-text>
+        </v-form>
+        <v-divider />
+        <v-card-actions>
+            <v-btn @click="save">сохранить</v-btn>
+        </v-card-actions>
+    </v-card>
 </template>
 
 <script>
-import CatalogTable from "@/components/CatalogTable";
-import CatalogEdit from "./components/CatalogEdit";
-import {Catalog} from "./entity/Catalog";
-
-export default {
-    name: 'App',
-    components: {CatalogEdit, CatalogTable},
-    async mounted() {
-        this.loading = true;
-        try {
-            const resp = await fetch('http://localhost:8081/catalog');
-            this.catalog = await resp.json();
-        } catch (e) {
-            alert('Произошла ошибка при получениее данных!')ж
-        } finally {
-            this.loading = false;
-        }
-    },
-    data: () => ({
-        dialog: false,
-        loading: false,
-        catalog: [
-            {
-                arm: "internal_arm_1", boss: "internal_boss_1", curators: [
-                    {name: "curator_1"}, {name: "curator_2"}
-                ]
-            },
-            {
-                arm: "internal_arm_2", boss: "internal_boss_2", curators: [
-                    {name: "curator_3"}, {name: "curator_4"}
-                ]
+    export default {
+        name: "CatalogEdit",
+        props: {
+            value: {
+                type: Object,
+                required: true
             }
-        ],
-        editedItem: new Catalog({}),
-        editedIndex: -1
-    }),
-    methods: {
-        close() {
-            this.dialog = false;
-            this.$nextTick(() => {
-                this.editedItem = Object.assign({}, new Catalog({}));
-                this.editedIndex = -1;
-            });
         },
-        onEdit(item) {
-            this.editedIndex = this.catalogs.findIndex(e => e === item);
-            this.editedItem = Object.assign(new Catalog({}), this.catalogs[this.editedIndex]);
-            this.dialog = true;
+        data: () => ({
+            valid: true,
+            item: {},
+            curator: '',
+            headers: [
+                {text: "Куратор", sortable: false, value: "name"},
+                {text: "Действия", sortable: false,  value: "actions", width: '5%'},
+            ]
+        }),
+        methods: {
+            onClick() {
+                if (this.$refs.form.validate()) {
+                    this.item.curators.push({name: this.curator});
+                    this.curator = '';
+                }
+            },
+            save() {
+                this.$emit('save', this.item);
+                this.close();
+            },
+            close() {
+                this.$refs.form.resetValidation();
+                this.curator = '';
+                this.item = {};
+                this.$emit('close');
+            },
+            remove(item) {
+                this.item.curators.splice(item, 1);
+            }
         },
-        onSave(item) {
-            this.catalog[this.editedIndex] = item;
-            this.close();
+        computed: {
+            items() {
+                return this.item.curators;
+            }
         },
-        saveOnServer() {
-
-        }
-    },
-    computed: {
-        catalogs() {
-            return this.catalog.map(result => new Catalog(result));
+        watch: {
+            value: {
+                immediate: true,
+                handler(val) {
+                    console.log(val)
+                    this.item = JSON.parse(JSON.stringify(val));
+                }
+            }
         }
     }
-}
 </script>
+
+<style scoped>
+
+</style>
